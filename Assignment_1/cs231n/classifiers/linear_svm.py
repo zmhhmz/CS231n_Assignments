@@ -26,7 +26,7 @@ def svm_loss_naive(W, X, y, reg):
   num_train = X.shape[0]
   loss = 0.0
   for i in range(num_train):
-    scores = X[i].dot(W)
+    scores = X[i].dot(W)    
     correct_class_score = scores[y[i]]
     for j in range(num_classes):
       if j == y[i]:
@@ -34,14 +34,17 @@ def svm_loss_naive(W, X, y, reg):
       margin = scores[j] - correct_class_score + 1 # note delta = 1
       if margin > 0:
         loss += margin
+        dW[:,j] += X[i].T
+        dW[:,y[i]] -= X[i].T
 
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
   loss /= num_train
+  dW /= num_train
 
   # Add regularization to the loss.
   loss += reg * np.sum(W * W)
-
+  dW += 2 * reg * W
   #############################################################################
   # TODO:                                                                     #
   # Compute the gradient of the loss function and store it dW.                #
@@ -69,7 +72,12 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  pass
+  scores = np.dot(X,W)
+  margin = scores - np.array([scores[np.arange(scores.shape[0]),y]]*10).T +1
+  margin[np.arange(scores.shape[0]),y]=0
+  margin = np.maximum(margin,0)
+  loss += np.sum(margin)/X.shape[0]
+  loss += reg * np.sum(W * W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -84,9 +92,19 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+  margin[margin>0.0]=1
+  margin[np.arange(scores.shape[0]),y]=-np.sum(margin,axis=1)
+  dW=np.dot(X.T,margin)/X.shape[0]+2*reg*W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
 
   return loss, dW
+
+
+
+
+
+
+
+
